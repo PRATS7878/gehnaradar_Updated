@@ -1,59 +1,121 @@
-"""AliExpress replacement — uses RapidAPI AliExpress Datahub (free tier).
+"""AliExpress — uses AliExpress affiliate open platform API.
 
-Free tier: 500 requests/month — enough for our daily 27-category run.
-Get key: https://rapidapi.com/aliexpress-datahub/api/aliexpress-datahub
-  → Subscribe → Basic (free) → copy your RapidAPI key
+This is AliExpress's official free API for affiliates. No RapidAPI needed.
+Falls back to their public product feed RSS if API key not set.
 
-Set GitHub secret: RAPIDAPI_KEY
+To get an affiliate API key (free):
+https://portals.aliexpress.com → sign up → get App Key + Secret
+Set secrets: ALIEXPRESS_APP_KEY and ALIEXPRESS_APP_SECRET
 
-Falls back to AliExpress affiliate open API if no RapidAPI key.
+Without keys: uses their public trending feed RSS (limited but free).
 """
+import hashlib
+import hmac
 import logging
 import os
+import time
+import xml.etree.ElementTree as ET
+from datetime import datetime
+
+import requests
 
 from .base import load_config, make_item, polite_get, save_raw
 
 log = logging.getLogger("aliexpress")
 
-RAPID_HOST = "aliexpress-datahub.p.rapidapi.com"
 
+def search_affiliate_api(query, app_key, app_secret, limit):
+    """AliExpress Affiliate API — official, free."""
+    params = {
+        "method": "aliexpress.affiliate.product.query",
+        "app_key": app_key,
+        "sign_method": "hmac-sha256",
+        "timestamp": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+        "format": "json",
+        "v": "2.0",
+        "keywords": query,
+        "page_size": limit,
+        "sort": "SALE_PRICE_ASC",
+        "target_currency": "USD",
+        "target_language": "EN",
+        "tracking_id": "gehnaradar",
+    }
+    # build signature
+    sorted_params = sorted(params.items())
+    base = "".join(f"{k}{v}" for k, v in sorted_params)
+    sign = hmac.new(
+        app_secret.encode(), base.encode(), hashlib.sha256
+    ).hexdigest().upper()
+    params["sign"] = sign
 
-def search_rapidapi(query, api_key, limit):
-    r = polite_get(
-        "https://aliexpress-datahub.p.rapidapi.com/item_search",
-        params={"q": query, "page": "1", "sort": "default"},
-        headers={
-            "X-RapidAPI-Key": api_key,
-            "X-RapidAPI-Host": RAPID_HOST,
-        },
-        sleep=(0.5, 1),
-    )
-    if not r:
-        return []
     try:
-        result = r.json().get("result", {})
-        products = result.get("resultList", [])
-    except ValueError:
+        r = requests.get("https://api-sg.aliexpress.com/sync", params=params, timeout=20)
+        data = r.json()
+        products = (
+            data.get("aliexpress_affiliate_product_query_response", {})
+                .get("resp_result", {})
+                .get("result", {})
+                .get("products", {})
+                .get("product", [])
+        )
+    except Exception as e:
+        log.warning("AliExpress API error: %s", e)
         return []
+
     items = []
     for p in products[:limit]:
         try:
-            detail = p.get("item", p)
-            pid = detail.get("itemId") or detail.get("productId")
-            title = detail.get("title") or detail.get("name", "")
-            img = detail.get("image") or detail.get("imageUrl", "")
-            if img and img.startswith("//"):
-                img = "https:" + img
-            price_obj = detail.get("sku", {}).get("def", {}) or detail
-            price = str(price_obj.get("promotionPrice") or
-                        price_obj.get("price") or
-                        detail.get("salePrice") or "")
             items.append(make_item(
-                title=title,
-                url=f"https://www.aliexpress.com/item/{pid}.html" if pid else
-                    f"https://www.aliexpress.com/wholesale?SearchText={query}",
-                image=img, source="AliExpress", country="GLOBAL",
-                price=price, query=query,
+                title=p["product_title"],
+                url=p["product_detail_url"],
+                image=p.get("product_main_image_url"),
+                source="AliExpress",
+                country="GLOBAL",
+                price=str(p.get("target_sale_price") or p.get("sale_price", "")),
+                currency=p.get("target_sale_price_currency", "USD"),
+                query=query,
+            ))
+        except (KeyError, TypeError):
+            continue
+    return items
+
+
+def search_rss_fallback(query, limit):
+    """AliExpress public search RSS — no key needed."""
+    slug = query.replace(" ", "+")
+    r = polite_get(
+        f"https://www.aliexpress.com/wholesale",
+        params={"SearchText": query, "initiative_id": "SB_20240101"},
+        sleep=(2, 4),
+    )
+    if not r:
+        return []
+
+    # Try to extract JSON from page
+    import re, json
+    m = re.search(r'"mods":\{"itemList":\{"content":(\[.*?\])', r.text, re.S)
+    if not m:
+        return []
+    try:
+        products = json.loads(m.group(1) + "]")[:limit]
+    except Exception:
+        return []
+
+    items = []
+    for p in products:
+        try:
+            pid = p["productId"]
+            img = p["image"]["imgUrl"]
+            if img.startswith("//"):
+                img = "https:" + img
+            items.append(make_item(
+                title=p["title"]["displayTitle"],
+                url=f"https://www.aliexpress.com/item/{pid}.html",
+                image=img,
+                source="AliExpress",
+                country="GLOBAL",
+                price=p.get("prices", {}).get("salePrice", {}).get("formattedPrice"),
+                query=query,
             ))
         except (KeyError, TypeError):
             continue
@@ -63,19 +125,20 @@ def search_rapidapi(query, api_key, limit):
 def run():
     cfg = load_config()
     limit = cfg["max_per_query"]
-    api_key = os.environ.get("RAPIDAPI_KEY", "")
-
-    if not api_key:
-        log.warning("RAPIDAPI_KEY not set — skipping AliExpress")
-        save_raw("aliexpress", [])
-        return []
-
+    app_key = os.environ.get("ALIEXPRESS_APP_KEY", "")
+    app_secret = os.environ.get("ALIEXPRESS_APP_SECRET", "")
     all_items = []
+
     for slug, cat in cfg["categories"].items():
-        got = search_rapidapi(cat["queries"][0], api_key, limit)
+        q = cat["queries"][0]
+        if app_key and app_secret:
+            got = search_affiliate_api(q, app_key, app_secret, limit)
+        else:
+            got = search_rss_fallback(q, limit)
         for it in got:
             it["category"] = slug
         all_items += got
+        time.sleep(0.5)
 
     save_raw("aliexpress", all_items)
     log.info("aliexpress: saved %d items", len(all_items))

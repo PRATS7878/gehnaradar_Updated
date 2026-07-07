@@ -1,47 +1,54 @@
-"""Flipkart — uses RapidAPI Flipkart endpoint (free tier).
+"""Flipkart — uses SerpAPI Google Shopping filtered to Flipkart.
 
-Flipkart's website blocks all cloud IPs. RapidAPI has a stable
-unofficial Flipkart search API on the free tier.
-
-Uses same RAPIDAPI_KEY — one key covers AliExpress + Noon + Flipkart.
-RapidAPI free: 500 req/month shared across all APIs you use.
-
-Get key: https://rapidapi.com → search "flipkart" → subscribe free
+Since Flipkart blocks all cloud IPs, we use SerpAPI to search
+Google Shopping filtered to site:flipkart.com — gets real Flipkart
+listings with images and prices. Uses the same SERPAPI_KEY.
 """
 import logging
 import os
 from datetime import date
 
-from .base import load_config, make_item, polite_get, save_raw
+import requests
+
+from .base import load_config, make_item, save_raw
 
 log = logging.getLogger("flipkart")
 
-RAPID_HOST = "real-time-flipkart-api.p.rapidapi.com"
 
-
-def search_rapidapi(query, api_key, limit):
-    r = polite_get(
-        "https://real-time-flipkart-api.p.rapidapi.com/product-search",
-        params={"q": query, "page": "1"},
-        headers={"X-RapidAPI-Key": api_key, "X-RapidAPI-Host": RAPID_HOST},
-        sleep=(0.5, 1),
-    )
-    if not r:
-        return []
+def search(query, api_key, limit):
     try:
-        products = r.json().get("products", [])
-    except ValueError:
+        r = requests.get(
+            "https://serpapi.com/search.json",
+            params={
+                "engine": "google_shopping",
+                "q": f"{query} site:flipkart.com",
+                "gl": "in",
+                "hl": "en",
+                "api_key": api_key,
+                "num": limit,
+            },
+            timeout=30,
+        )
+        if r.status_code != 200:
+            log.warning("SerpAPI Flipkart %s for %r", r.status_code, query)
+            return []
+        results = r.json().get("shopping_results", [])
+    except Exception as e:
+        log.warning("SerpAPI Flipkart error for %r: %s", query, e)
         return []
+
     items = []
-    for p in products[:limit]:
+    for p in results[:limit]:
         try:
             items.append(make_item(
-                title=p["title"] or p.get("name", ""),
-                url=p.get("url") or f"https://www.flipkart.com/search?q={query}",
-                image=p.get("thumbnail") or p.get("image"),
-                source="Flipkart", country="IN",
-                price=str(p.get("price") or p.get("selling_price") or ""),
-                currency="INR", query=query,
+                title=p["title"],
+                url=p.get("link") or p.get("product_link", ""),
+                image=p.get("thumbnail"),
+                source="Flipkart",
+                country="IN",
+                price=p.get("price"),
+                currency="INR",
+                query=query,
             ))
         except (KeyError, TypeError):
             continue
@@ -50,22 +57,21 @@ def search_rapidapi(query, api_key, limit):
 
 def run():
     cfg = load_config()
-    limit = cfg["max_per_query"]
-    api_key = os.environ.get("RAPIDAPI_KEY", "")
-
+    api_key = os.environ.get("SERPAPI_KEY", "")
     if not api_key:
-        log.warning("RAPIDAPI_KEY not set — skipping Flipkart")
+        log.warning("SERPAPI_KEY not set — skipping Flipkart")
         save_raw("flipkart", [])
         return []
 
-    # Every other category per day to save quota
+    limit = min(cfg["max_per_query"], 3)
     cats = list(cfg["categories"].items())
-    day_index = date.today().toordinal()
-    todays_cats = [c for i, c in enumerate(cats) if i % 2 == day_index % 2]
+    # rotate 1/3 of categories per day to preserve SerpAPI quota
+    day = date.today().toordinal()
+    todays = [c for i, c in enumerate(cats) if i % 3 == day % 3]
 
     all_items = []
-    for slug, cat in todays_cats:
-        got = search_rapidapi(cat["queries"][0], api_key, limit)
+    for slug, cat in todays:
+        got = search(cat["queries"][0], api_key, limit)
         for it in got:
             it["category"] = slug
         all_items += got

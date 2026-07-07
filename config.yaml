@@ -42,7 +42,7 @@ categories:
 
 # Scraper switches — turn any source off without touching code.
 sources:
-  google_trends: true
+  google_trends: false
   etsy: true
   pinterest: true      # best-effort, may need occasional fixing
   aliexpress: true     # best-effort

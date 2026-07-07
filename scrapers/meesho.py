@@ -1,49 +1,54 @@
-"""Meesho replacement — uses Google Shopping via SerpAPI free tier.
+"""Meesho/India shopping — Google Shopping via SerpAPI for India market.
 
-SerpAPI free tier: 100 searches/month. We run every other day per category
-to stay within the limit and cover all 27 categories in ~2 weeks.
-
-Get key: https://serpapi.com → Register → free plan (100/month)
-Set GitHub secret: SERPAPI_KEY
-
-Without key: skips gracefully, shows 0 items in Source Status.
+Covers Indian marketplace trends broadly. SerpAPI quota is shared
+across Flipkart, Myntra, Noon and Meesho — each rotates different
+category groups on different days to stay within 100/month free limit.
 """
 import logging
 import os
 from datetime import date
 
-from .base import load_config, make_item, polite_get, save_raw
+import requests
+
+from .base import load_config, make_item, save_raw
 
 log = logging.getLogger("meesho")
 
-SERPAPI = "https://serpapi.com/search.json"
 
-
-def search_google_shopping(query, api_key, country, limit):
-    r = polite_get(SERPAPI, params={
-        "engine": "google_shopping",
-        "q": query,
-        "gl": country.lower(),
-        "hl": "en",
-        "api_key": api_key,
-        "num": limit,
-    }, sleep=(0.5, 1.0))
-    if not r:
-        return []
+def search(query, api_key, limit):
     try:
+        r = requests.get(
+            "https://serpapi.com/search.json",
+            params={
+                "engine": "google_shopping",
+                "q": query + " artificial jewellery",
+                "gl": "in",
+                "hl": "en",
+                "api_key": api_key,
+                "num": limit,
+            },
+            timeout=30,
+        )
+        if r.status_code != 200:
+            log.warning("SerpAPI meesho %s for %r", r.status_code, query)
+            return []
         results = r.json().get("shopping_results", [])
-    except ValueError:
+    except Exception as e:
+        log.warning("SerpAPI meesho error: %s", e)
         return []
+
     items = []
     for p in results[:limit]:
         try:
+            source = p.get("source", "India Shopping")
             items.append(make_item(
                 title=p["title"],
                 url=p.get("link") or p.get("product_link", ""),
                 image=p.get("thumbnail"),
-                source=p.get("source", "Google Shopping"),
-                country=country,
+                source=source,
+                country="IN",
                 price=p.get("price"),
+                currency="INR",
                 query=query,
             ))
         except (KeyError, TypeError):
@@ -53,31 +58,26 @@ def search_google_shopping(query, api_key, country, limit):
 
 def run():
     cfg = load_config()
-    limit = min(cfg["max_per_query"], 5)   # stay within 100/month free tier
     api_key = os.environ.get("SERPAPI_KEY", "")
-
     if not api_key:
-        log.warning("SERPAPI_KEY not set — skipping Google Shopping")
+        log.warning("SERPAPI_KEY not set — skipping India Shopping")
         save_raw("meesho", [])
         return []
 
-    # Rotate through categories: run a different third each day to save quota
+    limit = min(cfg["max_per_query"], 5)
     cats = list(cfg["categories"].items())
-    day_index = date.today().toordinal()
-    # split into 3 groups, rotate daily
-    group = day_index % 3
-    todays_cats = [c for i, c in enumerate(cats) if i % 3 == group]
+    day = date.today().toordinal()
+    todays = [c for i, c in enumerate(cats) if i % 3 == day % 3]
 
     all_items = []
-    for slug, cat in todays_cats:
-        # India queries
-        got = search_google_shopping(cat["queries"][0], api_key, "IN", limit)
+    for slug, cat in todays:
+        got = search(cat["queries"][0], api_key, limit)
         for it in got:
             it["category"] = slug
         all_items += got
 
     save_raw("meesho", all_items)
-    log.info("google_shopping: saved %d items (group %d)", len(all_items), group)
+    log.info("india_shopping: saved %d items", len(all_items))
     return all_items
 
 

@@ -1,51 +1,52 @@
-"""Noon replacement — uses RapidAPI Noon scraper (free tier).
+"""Noon — uses SerpAPI Google Shopping filtered to Noon UAE and KSA.
 
-Noon's website is heavily JS-rendered and blocks server IPs.
-RapidAPI has a reliable Noon product search endpoint.
-
-Uses same RAPIDAPI_KEY as AliExpress — one key, two sources.
-Get key: https://rapidapi.com → search "noon products" → subscribe free
-
-Falls back to Noon's open product feed if no key.
+Noon blocks cloud IPs entirely. Google Shopping via SerpAPI
+reliably returns Noon listings for Gulf markets.
 """
 import logging
 import os
+from datetime import date
 
-from .base import load_config, make_item, polite_get, save_raw
+import requests
+
+from .base import load_config, make_item, save_raw
 
 log = logging.getLogger("noon")
 
-STOREFRONTS = {"AE": "uae-en", "SA": "saudi-en"}
-RAPID_HOST = "noon-data.p.rapidapi.com"
 
-
-def search_rapidapi(query, api_key, country, limit):
-    locale = STOREFRONTS.get(country, "uae-en")
-    r = polite_get(
-        "https://noon-data.p.rapidapi.com/products",
-        params={"q": query, "locale": locale, "limit": limit},
-        headers={"X-RapidAPI-Key": api_key, "X-RapidAPI-Host": RAPID_HOST},
-        sleep=(0.5, 1),
-    )
-    if not r:
-        return []
+def search(query, api_key, country, limit):
+    gl = "ae" if country == "AE" else "sa"
     try:
-        products = r.json().get("data", {}).get("products", []) or r.json().get("products", [])
-    except ValueError:
+        r = requests.get(
+            "https://serpapi.com/search.json",
+            params={
+                "engine": "google_shopping",
+                "q": f"{query} site:noon.com",
+                "gl": gl,
+                "hl": "en",
+                "api_key": api_key,
+                "num": limit,
+            },
+            timeout=30,
+        )
+        if r.status_code != 200:
+            log.warning("SerpAPI Noon %s for %r", r.status_code, query)
+            return []
+        results = r.json().get("shopping_results", [])
+    except Exception as e:
+        log.warning("SerpAPI Noon error: %s", e)
         return []
+
     items = []
-    for p in products[:limit]:
+    for p in results[:limit]:
         try:
-            sku = p.get("sku") or p.get("id", "")
-            locale_str = STOREFRONTS.get(country, "uae-en")
             items.append(make_item(
-                title=p["name"],
-                url=f"https://www.noon.com/{locale_str}/{sku}/p/",
-                image=p.get("image_key") and
-                      f"https://f.nooncdn.com/products/tr:n-t_240/{p['image_key']}.jpg" or
-                      p.get("image") or p.get("thumbnail"),
-                source="Noon", country=country,
-                price=str(p.get("sale_price") or p.get("price") or ""),
+                title=p["title"],
+                url=p.get("link") or p.get("product_link", ""),
+                image=p.get("thumbnail"),
+                source="Noon",
+                country=country,
+                price=p.get("price"),
                 currency="AED" if country == "AE" else "SAR",
                 query=query,
             ))
@@ -56,18 +57,22 @@ def search_rapidapi(query, api_key, country, limit):
 
 def run():
     cfg = load_config()
-    limit = cfg["max_per_query"]
-    api_key = os.environ.get("RAPIDAPI_KEY", "")
-
+    api_key = os.environ.get("SERPAPI_KEY", "")
     if not api_key:
-        log.warning("RAPIDAPI_KEY not set — skipping Noon")
+        log.warning("SERPAPI_KEY not set — skipping Noon")
         save_raw("noon", [])
         return []
 
+    limit = min(cfg["max_per_query"], 3)
+    cats = list(cfg["categories"].items())
+    day = date.today().toordinal()
+    # third rotation group
+    todays = [c for i, c in enumerate(cats) if i % 3 == (day + 2) % 3]
+
     all_items = []
-    for idx, (slug, cat) in enumerate(cfg["categories"].items()):
-        country = "AE" if idx % 2 == 0 else "SA"
-        got = search_rapidapi(cat["queries"][0], api_key, country, limit)
+    for slug, cat in todays:
+        country = "AE" if len(all_items) % 2 == 0 else "SA"
+        got = search(cat["queries"][0], api_key, country, limit)
         for it in got:
             it["category"] = slug
         all_items += got
