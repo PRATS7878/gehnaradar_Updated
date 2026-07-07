@@ -1,12 +1,12 @@
 {
- "aliexpress": 2,
- "amazon": 5,
- "ebay": 2,
- "etsy": 4,
- "flipkart": 1,
+ "aliexpress": 0,
+ "amazon": 120,
+ "ebay": 0,
+ "etsy": 0,
+ "flipkart": 0,
  "google_trends": 0,
- "meesho": 3,
- "myntra": 1,
- "noon": 2,
- "pinterest": 3
+ "meesho": 40,
+ "myntra": 0,
+ "noon": 0,
+ "pinterest": 126
 }

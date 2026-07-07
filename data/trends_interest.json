@@ -3,30 +3,168 @@
   "market": "IN",
   "category": "jhumka",
   "term": "jhumka earrings",
-  "score": 78.0
+  "score": 29.4
  },
  {
   "market": "IN",
-  "category": "mangalsutra",
-  "term": "mangalsutra designs modern",
-  "score": 64.5
+  "category": "hoops",
+  "term": "hoop earrings trendy",
+  "score": 0.3
+ },
+ {
+  "market": "IN",
+  "category": "chandbali",
+  "term": "chandbali earrings",
+  "score": 0.3
+ },
+ {
+  "market": "IN",
+  "category": "nose_pin",
+  "term": "nose pin designs artificial",
+  "score": 0.3
+ },
+ {
+  "market": "IN",
+  "category": "jewellery_set",
+  "term": "jewellery set gold plated",
+  "score": 0.2
+ },
+ {
+  "market": "IN",
+  "category": "oxidised",
+  "term": "oxidised jewellery trending",
+  "score": 0.6
+ },
+ {
+  "market": "IN",
+  "category": "meenakari",
+  "term": "meenakari jewellery",
+  "score": 0.5
+ },
+ {
+  "market": "IN",
+  "category": "brooch",
+  "term": "brooch designs women",
+  "score": 0.6
+ },
+ {
+  "market": "US",
+  "category": "bangles",
+  "term": "bangles set artificial",
+  "score": 0.4
+ },
+ {
+  "market": "US",
+  "category": "rings",
+  "term": "adjustable rings women fashion",
+  "score": 0.5
+ },
+ {
+  "market": "US",
+  "category": "anklets",
+  "term": "anklet payal designs",
+  "score": 0.6
  },
  {
   "market": "US",
   "category": "korean_minimal",
   "term": "korean minimalist jewellery",
-  "score": 52.0
+  "score": 0.6
+ },
+ {
+  "market": "US",
+  "category": "brooch",
+  "term": "brooch designs women",
+  "score": 0.7
  },
  {
   "market": "AE",
-  "category": "kundan",
-  "term": "kundan jewellery set",
-  "score": 47.5
+  "category": "jhumka",
+  "term": "jhumka earrings",
+  "score": 0.6
+ },
+ {
+  "market": "AE",
+  "category": "hoops",
+  "term": "hoop earrings trendy",
+  "score": 0.3
+ },
+ {
+  "market": "SA",
+  "category": "meenakari",
+  "term": "meenakari jewellery",
+  "score": 0.4
+ },
+ {
+  "market": "SA",
+  "category": "brooch",
+  "term": "brooch designs women",
+  "score": 0.6
+ },
+ {
+  "market": "GB",
+  "category": "meenakari",
+  "term": "meenakari jewellery",
+  "score": 0.6
+ },
+ {
+  "market": "GB",
+  "category": "brooch",
+  "term": "brooch designs women",
+  "score": 0.2
  },
  {
   "market": "GLOBAL",
-  "category": "hoops",
-  "term": "hoop earrings trendy",
-  "score": 71.0
+  "category": "choker",
+  "term": "choker necklace fashion",
+  "score": 0.3
+ },
+ {
+  "market": "GLOBAL",
+  "category": "layered_necklace",
+  "term": "layered necklace gold plated",
+  "score": 0.4
+ },
+ {
+  "market": "GLOBAL",
+  "category": "pendant_set",
+  "term": "pendant set artificial jewellery",
+  "score": 0.6
+ },
+ {
+  "market": "GLOBAL",
+  "category": "rani_haar",
+  "term": "rani haar necklace",
+  "score": 0.1
+ },
+ {
+  "market": "GLOBAL",
+  "category": "rings",
+  "term": "adjustable rings women fashion",
+  "score": 0.2
+ },
+ {
+  "market": "GLOBAL",
+  "category": "anklets",
+  "term": "anklet payal designs",
+  "score": 0.6
+ },
+ {
+  "market": "GLOBAL",
+  "category": "kundan",
+  "term": "kundan jewellery set",
+  "score": 1.0
+ },
+ {
+  "market": "GLOBAL",
+  "category": "meenakari",
+  "term": "meenakari jewellery",
+  "score": 0.6
+ },
+ {
+  "market": "GLOBAL",
+  "category": "brooch",
+  "term": "brooch designs women",
+  "score": 0.2
  }
 ]
