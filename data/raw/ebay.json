@@ -1,0 +1,32 @@
+[
+ {
+  "id": "f5bed2549c23b4a7",
+  "title": "Vintage Gold Tone Chandelier Earrings Statement",
+  "url": "https://www.ebay.com/itm/501",
+  "image": "https://picsum.photos/seed/e1/400/420",
+  "source": "eBay",
+  "country": "GLOBAL",
+  "price": "$14.99",
+  "currency": null,
+  "query": "chandbali earrings",
+  "trend_score": null,
+  "category": "chandbali",
+  "first_seen": "2026-07-06",
+  "scraped_at": "2026-07-06"
+ },
+ {
+  "id": "e47651999738bdcf",
+  "title": "Chunky Waterproof Gold Plated Cuban Bracelet",
+  "url": "https://www.ebay.com/itm/502",
+  "image": "https://picsum.photos/seed/e2/400/420",
+  "source": "eBay",
+  "country": "GLOBAL",
+  "price": "$9.50",
+  "currency": null,
+  "query": "bracelet women gold plated",
+  "trend_score": null,
+  "category": "bracelets",
+  "first_seen": "2026-07-06",
+  "scraped_at": "2026-07-06"
+ }
+]

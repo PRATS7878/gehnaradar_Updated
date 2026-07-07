@@ -1,0 +1,59 @@
+# GehnaRadar configuration
+# Markets: geo codes used by scrapers (Google Trends geo, Amazon domain, etc.)
+markets:
+  IN: { name: India, trends_geo: IN, amazon: amazon.in }
+  US: { name: USA, trends_geo: US, amazon: amazon.com }
+  AE: { name: UAE/Gulf, trends_geo: AE, amazon: amazon.ae }
+  SA: { name: Saudi Arabia, trends_geo: SA, amazon: amazon.sa }
+  GB: { name: UK, trends_geo: GB, amazon: amazon.co.uk }
+  GLOBAL: { name: Global, trends_geo: "", amazon: null }
+
+# Artificial / imitation jewellery categories.
+# `queries` are used for marketplace + Pinterest searches.
+# `match` keywords are used to auto-categorise scraped item titles.
+categories:
+  jhumka:            { label: "Jhumka Earrings",      queries: ["jhumka earrings", "oxidised jhumka"],            match: [jhumka, jhumki] }
+  studs:             { label: "Stud Earrings",        queries: ["stud earrings fashion", "ad stud earrings"],     match: [stud] }
+  hoops:             { label: "Hoop Earrings",        queries: ["hoop earrings trendy", "gold plated hoops"],     match: [hoop, huggie] }
+  chandbali:         { label: "Chandbali",            queries: ["chandbali earrings"],                            match: [chandbali, chaandbali] }
+  ear_cuffs:         { label: "Ear Cuffs",            queries: ["ear cuff earrings"],                             match: [ear cuff, earcuff] }
+  choker:            { label: "Chokers",              queries: ["choker necklace fashion"],                       match: [choker] }
+  layered_necklace:  { label: "Layered Necklaces",    queries: ["layered necklace gold plated"],                  match: [layered, multi layer] }
+  pendant_set:       { label: "Pendant Sets",         queries: ["pendant set artificial jewellery"],              match: [pendant] }
+  rani_haar:         { label: "Rani Haar / Long Sets",queries: ["rani haar necklace", "long necklace set"],       match: [rani haar, long necklace, haram] }
+  mangalsutra:       { label: "Mangalsutra",          queries: ["mangalsutra designs modern"],                    match: [mangalsutra] }
+  bangles:           { label: "Bangles & Kada",       queries: ["bangles set artificial", "kada bracelet women"], match: [bangle, kada, chuda] }
+  bracelets:         { label: "Bracelets",            queries: ["bracelet women gold plated"],                    match: [bracelet] }
+  rings:             { label: "Rings",                queries: ["adjustable rings women fashion"],                match: [ring] }
+  anklets:           { label: "Anklets / Payal",      queries: ["anklet payal designs"],                          match: [anklet, payal] }
+  maang_tikka:       { label: "Maang Tikka",          queries: ["maang tikka designs"],                           match: [maang tikka, tikka, matha patti] }
+  nose_pin:          { label: "Nose Pins",            queries: ["nose pin designs artificial"],                   match: [nose pin, nose ring, nath] }
+  hair_accessories:  { label: "Hair Accessories",     queries: ["hair accessories bridal jewellery"],             match: [hair clip, juda, hair pin, hair accessor] }
+  jewellery_set:     { label: "Jewellery Sets",       queries: ["jewellery set gold plated", "necklace earring set"], match: [jewellery set, jewelry set, necklace set] }
+  kamarbandh:        { label: "Waist Chains",         queries: ["kamarbandh waist chain"],                        match: [kamarbandh, waist chain, belly chain] }
+  oxidised:          { label: "Oxidised Jewellery",   queries: ["oxidised jewellery trending"],                   match: [oxidised, oxidized, silver look] }
+  kundan:            { label: "Kundan",               queries: ["kundan jewellery set"],                          match: [kundan] }
+  american_diamond:  { label: "American Diamond (AD)",queries: ["american diamond jewellery"],                    match: [american diamond, ad set, cz , cubic zirconia] }
+  temple:            { label: "Temple Jewellery",     queries: ["temple jewellery artificial"],                   match: [temple] }
+  pearl:             { label: "Pearl Jewellery",      queries: ["pearl jewellery trending"],                      match: [pearl, moti] }
+  korean_minimal:    { label: "Korean / Minimalist",  queries: ["korean minimalist jewellery", "dainty jewellery"], match: [korean, minimalist, dainty] }
+  meenakari:         { label: "Meenakari",            queries: ["meenakari jewellery"],                           match: [meenakari, enamel] }
+  brooch:            { label: "Brooches",             queries: ["brooch designs women"],                          match: [brooch, saree pin] }
+
+# Scraper switches — turn any source off without touching code.
+sources:
+  google_trends: true
+  etsy: true
+  pinterest: true      # best-effort, may need occasional fixing
+  aliexpress: true     # best-effort
+  meesho: true         # best-effort
+  amazon: true         # bestseller pages only; ToS grey-zone, set false if uncomfortable
+  ebay: true           # global/US listings, sorted newest
+  noon: true           # Gulf's biggest marketplace (UAE/KSA), best-effort
+  flipkart: true       # best-effort; heavily protected + ToS grey-zone (you'll sell here) — flip to false anytime
+  myntra: true         # best-effort; internal API, ToS grey-zone — flip to false anytime
+
+# How many days of history to keep in the catalog
+retention_days: 14
+# Max items to fetch per query per source (keeps run time + politeness in check)
+max_per_query: 8

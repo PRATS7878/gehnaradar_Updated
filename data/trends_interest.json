@@ -1,0 +1,32 @@
+[
+ {
+  "market": "IN",
+  "category": "jhumka",
+  "term": "jhumka earrings",
+  "score": 78.0
+ },
+ {
+  "market": "IN",
+  "category": "mangalsutra",
+  "term": "mangalsutra designs modern",
+  "score": 64.5
+ },
+ {
+  "market": "US",
+  "category": "korean_minimal",
+  "term": "korean minimalist jewellery",
+  "score": 52.0
+ },
+ {
+  "market": "AE",
+  "category": "kundan",
+  "term": "kundan jewellery set",
+  "score": 47.5
+ },
+ {
+  "market": "GLOBAL",
+  "category": "hoops",
+  "term": "hoop earrings trendy",
+  "score": 71.0
+ }
+]

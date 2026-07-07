@@ -1,0 +1,32 @@
+[
+ {
+  "id": "112d15c9cdef78c8",
+  "title": "Gold Plated Zircon Necklace Set Arabic Style",
+  "url": "https://www.noon.com/uae-en/N501/p/",
+  "image": "https://picsum.photos/seed/n1/400/420",
+  "source": "Noon",
+  "country": "AE",
+  "price": "89",
+  "currency": "AED",
+  "query": "jewellery set gold plated",
+  "trend_score": null,
+  "category": "jewellery_set",
+  "first_seen": "2026-07-06",
+  "scraped_at": "2026-07-06"
+ },
+ {
+  "id": "90a000455dd57dbb",
+  "title": "Pearl Hair Pins Set of 6 Bridal",
+  "url": "https://www.noon.com/saudi-en/N502/p/",
+  "image": "https://picsum.photos/seed/n2/400/420",
+  "source": "Noon",
+  "country": "SA",
+  "price": "35",
+  "currency": "SAR",
+  "query": "hair accessories bridal jewellery",
+  "trend_score": null,
+  "category": "hair_accessories",
+  "first_seen": "2026-07-06",
+  "scraped_at": "2026-07-06"
+ }
+]
